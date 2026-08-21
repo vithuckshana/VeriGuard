@@ -31,7 +31,9 @@ VeriGuard is built using a modern full-stack architecture separated into distinc
 ### Backend
 - **Framework:** FastAPI (Python)
 - **Database:** SQLite (via SQLAlchemy)
-- **AI Processing Layer:** Designed to utilize OpenCV and Google MediaPipe for Face Mesh (liveness) and Hand Tracking (gestures). *(Note: The initial prototype utilizes a mocked AI service layer to demonstrate the architecture and UI flow without heavy computer vision dependencies).*
+- **AI Processing Layer:** Utilizes **OpenCV** and **Google MediaPipe** for real-time computer vision processing:
+  - **FaceMesh:** Maps 468 3D facial landmarks to create a unique geometric encoding for face verification and liveness detection.
+  - **Hands Tracking:** Maps 21 hand joints to mathematically calculate finger extensions and verify dynamic hand gestures (e.g., Peace Sign, Thumbs Up).
 
 ## 🚀 How to Run Locally
 
@@ -55,6 +57,5 @@ The frontend UI will run on `http://localhost:3000`.
 > **Note on Browser Camera Security:** Modern browsers require HTTPS or `localhost` to access the webcam. Ensure you access the frontend via `http://localhost:3000` so the browser allows the camera permissions.
 
 ## 🔮 Future Enhancements
-- Replace the mock `ai_service.py` with actual `OpenCV` and `MediaPipe` integration.
 - Store facial encodings securely as encrypted vectors in PostgreSQL.
-- Implement deep-learning-based anti-spoofing models.
+- Implement deep-learning-based anti-spoofing models for enhanced liveness detection.
