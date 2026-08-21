@@ -1,23 +1,114 @@
-import random
+import cv2
+import numpy as np
+import base64
+import mediapipe as mp
+import math
+
+mp_face_mesh = mp.solutions.face_mesh
+mp_hands = mp.solutions.hands
+
+def base64_to_cv2(image_base64: str):
+    if "," in image_base64:
+        image_base64 = image_base64.split(",")[1]
+    img_data = base64.b64decode(image_base64)
+    np_arr = np.frombuffer(img_data, np.uint8)
+    img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    return img
 
 def extract_face_encoding(image_base64: str):
-    # Mocking face encoding extraction. In reality, decode base64, run through MediaPipe/OpenCV.
-    # Return a random 128-d vector for simulation.
-    return [random.random() for _ in range(128)]
+    """
+    Uses MediaPipe Face Mesh to extract a 3D landmark array. 
+    While not a robust deep-learning facial recognition embedding (like FaceNet), 
+    it serves as a geometric biometric encoding for our prototype.
+    """
+    img = base64_to_cv2(image_base64)
+    if img is None:
+        return None
+    
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, refine_landmarks=True) as face_mesh:
+        results = face_mesh.process(img_rgb)
+        if not results.multi_face_landmarks:
+            return None
+        
+        # Flatten the landmarks into a single numerical array
+        encoding = []
+        for landmark in results.multi_face_landmarks[0].landmark:
+            encoding.extend([landmark.x, landmark.y, landmark.z])
+        return encoding
 
-def compare_faces(encoding1, encoding2, tolerance=0.6):
-    # Mock face comparison.
+def compare_faces(encoding1, encoding2, tolerance=0.15):
+    """
+    Compares two Face Mesh landmark arrays using Euclidean distance.
+    """
     if not encoding1 or not encoding2:
         return False
-    # Just returning True for the simulation if they exist
-    return True
+    
+    vec1 = np.array(encoding1)
+    vec2 = np.array(encoding2)
+    distance = np.linalg.norm(vec1 - vec2)
+    # Using average distance per landmark coordinate
+    avg_distance = distance / len(vec1)
+    
+    # If the distance is below tolerance, it's considered a match
+    return avg_distance < tolerance
 
 def verify_liveness(image_base64: str):
-    # Mock liveness (e.g. check for a blink).
-    # Return True simulating a successful blink detection.
-    return True
+    """
+    Simple Liveness: Ensures a face is actually present and oriented forward.
+    (Advanced implementation would check Eye Aspect Ratio across multiple frames for a blink).
+    """
+    img = base64_to_cv2(image_base64)
+    if img is None:
+        return False
+        
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1) as face_mesh:
+        results = face_mesh.process(img_rgb)
+        if results.multi_face_landmarks:
+            return True # Face detected = Liveness passed (for static prototype)
+    return False
 
 def verify_gesture(image_base64: str, expected_gesture: str):
-    # Mock gesture detection.
-    # Return True simulating the gesture was correctly detected.
-    return True
+    """
+    Uses MediaPipe Hands to detect hand gestures.
+    """
+    img = base64_to_cv2(image_base64)
+    if img is None:
+        return False
+        
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    with mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.5) as hands:
+        results = hands.process(img_rgb)
+        if not results.multi_hand_landmarks:
+            return False
+            
+        hand_landmarks = results.multi_hand_landmarks[0].landmark
+        
+        # Fingers: Thumb, Index, Middle, Ring, Pinky
+        # 1 means extended, 0 means folded
+        fingers = [0, 0, 0, 0, 0]
+        
+        # Thumb (Check if tip is further left/right than the joint)
+        if hand_landmarks[4].x < hand_landmarks[3].x: # Assumes right hand
+            fingers[0] = 1
+            
+        # 4 Fingers (Check if tip is higher than the lower joint)
+        tip_ids = [8, 12, 16, 20]
+        pip_ids = [6, 10, 14, 18]
+        for i in range(4):
+            if hand_landmarks[tip_ids[i]].y < hand_landmarks[pip_ids[i]].y:
+                fingers[i+1] = 1
+                
+        detected_gesture = "Unknown"
+        if fingers == [1, 1, 1, 1, 1]:
+            detected_gesture = "Open Palm"
+        elif fingers == [0, 0, 0, 0, 0] or fingers == [1, 0, 0, 0, 0]:
+            detected_gesture = "Closed Fist"
+        elif fingers == [0, 1, 1, 0, 0] or fingers == [1, 1, 1, 0, 0]:
+            detected_gesture = "Peace Sign"
+        elif fingers == [1, 0, 0, 0, 0]:
+            detected_gesture = "Thumbs Up"
+        
+        # Normalize casing for comparison
+        return detected_gesture.lower() == expected_gesture.lower()

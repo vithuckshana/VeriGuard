@@ -19,45 +19,51 @@ export default function LoginPage() {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate backend password check
     setLoading(true);
+    // Real check would happen here. Passing automatically for prototype.
     setTimeout(() => {
       setLoading(false);
       setStep(2);
-    }, 1000);
+    }, 500);
   };
 
   const handleFaceCapture = async (imageSrc: string) => {
     setLoading(true);
-    setMessage("Verifying face...");
-    // Simulate face check
-    setTimeout(() => {
-      setLoading(false);
+    setMessage("Verifying face geometry with MediaPipe...");
+    try {
+      await axios.post("http://localhost:8000/auth/verify-face", { image: imageSrc });
       setMessage("");
       setStep(3);
-    }, 1500);
+    } catch (err) {
+      setMessage("Failed to detect face. Please try again.");
+    }
+    setLoading(false);
   };
 
   const handleLivenessCapture = async (imageSrc: string) => {
     setLoading(true);
-    setMessage("Checking liveness (Blink)...");
-    // Simulate liveness check
-    setTimeout(() => {
-      setLoading(false);
+    setMessage("Checking liveness...");
+    try {
+      await axios.post("http://localhost:8000/auth/verify-liveness", { image: imageSrc });
       setMessage("");
       setStep(4);
-    }, 1500);
+    } catch (err) {
+      setMessage("Liveness check failed. Please look straight at the camera.");
+    }
+    setLoading(false);
   };
 
   const handleGestureCapture = async (imageSrc: string) => {
     setLoading(true);
     setMessage(`Verifying gesture: ${challenge}...`);
-    // Simulate gesture check
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await axios.post("http://localhost:8000/auth/verify-gesture", { image: imageSrc, challenge: challenge });
       setMessage("Authentication Successful!");
       setStep(5);
-    }, 1500);
+    } catch (err) {
+      setMessage(`Failed to detect ${challenge}. Please make the gesture clearly visible.`);
+    }
+    setLoading(false);
   };
 
   return (
