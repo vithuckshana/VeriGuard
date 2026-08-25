@@ -6,10 +6,14 @@ from ..core.database import get_db
 from ..models.user import AuditLog
 from google.oauth2 import id_token
 from google.auth.transport import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-GOOGLE_CLIENT_ID = "415602385475-mdth9q5579q4kt0a5lo6ceqnofvtknqn.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
 class BiometricPayload(BaseModel):
     username: str
