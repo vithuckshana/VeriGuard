@@ -1,20 +1,36 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ContinuousVerifier from '@/components/ContinuousVerifier';
 import { ShieldCheck, Users, Activity, Lock, AlertOctagon } from 'lucide-react';
+import axios from 'axios';
 
 export default function DashboardPage() {
-  const mockLogs = [
-    { id: 1, time: "08:42:15 AM", user: "sarah.jenkins@corp.com", event: "Login Success", location: "New York, USA", ip: "192.158.1.38", status: "success" },
-    { id: 2, time: "08:45:33 AM", user: "m.rodriguez@corp.com", event: "Continuous Verification Failed", location: "Austin, USA", ip: "10.4.22.109", status: "danger" },
-    { id: 3, time: "09:12:05 AM", user: "david.chen@corp.com", event: "Gesture Challenge Failed (Peace Sign)", location: "London, UK", ip: "82.13.29.11", status: "warning" },
-    { id: 4, time: "09:30:45 AM", user: "j.smith@corp.com", event: "Liveness Check Failed (Spoofing Attempt)", location: "Unknown (Proxy)", ip: "145.22.1.99", status: "danger" },
-    { id: 5, time: "09:31:02 AM", user: "j.smith@corp.com", event: "Account Locked (Multiple Biometric Failures)", location: "Unknown (Proxy)", ip: "145.22.1.99", status: "warning" },
-    { id: 6, time: "10:14:22 AM", user: "emily.stark@corp.com", event: "Login Success", location: "Berlin, DE", ip: "99.14.55.2", status: "success" },
-    { id: 7, time: "10:28:19 AM", user: "a.patel@corp.com", event: "Unauthorized Face Detected (Session Locked)", location: "Chicago, USA", ip: "10.8.44.201", status: "danger" },
-    { id: 8, time: "11:05:40 AM", user: "alex.williams@corp.com", event: "Gesture Challenge Failed (Closed Fist)", location: "Seattle, USA", ip: "65.22.19.4", status: "warning" },
-  ];
+  const [logs, setLogs] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    activeSessions: 0,
+    successfulLogins: 0,
+    lockedSessions: 0,
+    securityAlerts: 0
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [logsRes, statsRes] = await Promise.all([
+          axios.get("http://localhost:8000/admin/logs"),
+          axios.get("http://localhost:8000/admin/stats")
+        ]);
+        setLogs(logsRes.data);
+        setStats(statsRes.data);
+      } catch (err) {
+        console.error("Failed to fetch dashboard data");
+      }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-8">
@@ -38,28 +54,28 @@ export default function DashboardPage() {
           <Users className="w-10 h-10 text-blue-400 mr-4" />
           <div>
             <p className="text-slate-400 text-sm">Active Sessions</p>
-            <p className="text-2xl font-bold">1,284</p>
+            <p className="text-2xl font-bold">{stats.activeSessions}</p>
           </div>
         </div>
         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 flex items-center">
           <Activity className="w-10 h-10 text-green-400 mr-4" />
           <div>
-            <p className="text-slate-400 text-sm">Successful Logins (24h)</p>
-            <p className="text-2xl font-bold">8,492</p>
+            <p className="text-slate-400 text-sm">Successful Logins</p>
+            <p className="text-2xl font-bold">{stats.successfulLogins}</p>
           </div>
         </div>
         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 flex items-center">
           <Lock className="w-10 h-10 text-yellow-400 mr-4" />
           <div>
-            <p className="text-slate-400 text-sm">Locked Sessions (24h)</p>
-            <p className="text-2xl font-bold">23</p>
+            <p className="text-slate-400 text-sm">Locked Sessions</p>
+            <p className="text-2xl font-bold">{stats.lockedSessions}</p>
           </div>
         </div>
         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 flex items-center">
           <AlertOctagon className="w-10 h-10 text-red-400 mr-4" />
           <div>
-            <p className="text-slate-400 text-sm">Security Alerts (24h)</p>
-            <p className="text-2xl font-bold">47</p>
+            <p className="text-slate-400 text-sm">Security Alerts</p>
+            <p className="text-2xl font-bold">{stats.securityAlerts}</p>
           </div>
         </div>
       </div>
@@ -79,7 +95,7 @@ export default function DashboardPage() {
             </tr>
           </thead>
           <tbody>
-            {mockLogs.map((log) => (
+            {logs.map((log) => (
               <tr key={log.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
                 <td className="p-4 text-slate-300 text-sm">{log.time}</td>
                 <td className="p-4 font-medium">{log.user}</td>
@@ -101,6 +117,7 @@ export default function DashboardPage() {
             ))}
           </tbody>
         </table>
+        {logs.length === 0 && <div className="p-8 text-center text-slate-500">No security events logged yet. Try logging in!</div>}
       </div>
     </div>
   );

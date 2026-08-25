@@ -16,8 +16,10 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=True)
+    username = Column(String, nullable=True)
     event_type = Column(String)
     status = Column(String)
+    ip_address = Column(String, nullable=True)
+    location = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
     details = Column(String, nullable=True)
