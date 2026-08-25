@@ -26,7 +26,7 @@ def extract_face_encoding(image_base64: str):
         return None
     
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, refine_landmarks=True) as face_mesh:
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, refine_landmarks=True, min_detection_confidence=0.3) as face_mesh:
         results = face_mesh.process(img_rgb)
         if not results.multi_face_landmarks:
             return None
@@ -63,7 +63,7 @@ def verify_liveness(image_base64: str):
         return False
         
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1) as face_mesh:
+    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.3) as face_mesh:
         results = face_mesh.process(img_rgb)
         if results.multi_face_landmarks:
             return True # Face detected = Liveness passed (for static prototype)
