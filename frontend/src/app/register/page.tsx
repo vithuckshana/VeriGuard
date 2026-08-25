@@ -80,7 +80,6 @@ export default function RegisterPage() {
                   onError={() => {
                     setMessage('Google Registration Failed');
                   }}
-                  useOneTap
                 />
               )}
             </div>

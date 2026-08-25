@@ -110,7 +110,6 @@ export default function LoginPage() {
                   onError={() => {
                     setMessage('Google Login Failed');
                   }}
-                  useOneTap
                 />
               )}
             </div>
