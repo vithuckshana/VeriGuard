@@ -28,7 +28,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full flex flex-col`}
       >
-        <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+        <GoogleOAuthProvider clientId="415602385475-mdth9q5579q4kt0a5lo6ceqnofvtknqn.apps.googleusercontent.com">
           {children}
         </GoogleOAuthProvider>
       </body>

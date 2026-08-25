@@ -9,7 +9,7 @@ from google.auth.transport import requests
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID" # Will be replaced by user
+GOOGLE_CLIENT_ID = "415602385475-mdth9q5579q4kt0a5lo6ceqnofvtknqn.apps.googleusercontent.com"
 
 class BiometricPayload(BaseModel):
     username: str
